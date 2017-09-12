@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+
+<title>Insert title here</title>
+<script type="text/javascript" src="immutable.min.js"></script>
+<script type="text/javascript" src="individual_store.js"></script>  
+<script type="text/javascript" src="ontologie.js"></script>  
+<script type="text/javascript" src="rules.js"></script>
+<script type="text/javascript" src="test.js"></script>   
+<script type="text/javascript" src="jsengine.js"></script>
+<script type="text/javascript" src="forms.js"></script>
+<script type="text/javascript" src="index.js"></script>
+<script type="text/javascript" src="Filter_Property.js"></script>
+
+<script src="lib/handsontable.full.js"></script>
+<link rel="stylesheet" media="screen" href="css/handsontable.full.css">
+</head>
+<body>
+<div id="reactroot"></div>
+<div id="menu"></div>
+<div id="targetClass"></div>
+<br>
+<div id="root"></div>
+<div id="table"></div>
+<script>
+var doc=document;
+var ini = new Date().getTime();
+class guiListener extends storeListener{
+    set(idcls,id,propname,value){
+		/*var node = doc.getElementById(id); 
+		if(node!=undefined && node!=null){
+			node.innerHTML=node.innerHTML+" class:"+idcls+" "+propname+": "+value;
+		}
+		
+		var root = document.getElementById("root");                 
+		var node = document.createElement("LI");
+		node.setAttribute("id",id);
+		var textnode = document.createTextNode("set object notification "+id+" prop:"+propname+" val:"+value);  
+		node.style.color="gray"; 
+		node.style.fontSize="small";
+		node.appendChild(textnode);   
+		root.appendChild(node);     */
+    }
+    
+    addvalue(id,propname,value){
+		var node = document.getElementById(id);                 	
+		node.innerHTML=node.innerHTML+" "+propname+": "+value;      
+	}
+    
+    new_individual(idclass,id){
+		/*var root = document.getElementById("root");                 
+		var node = document.createElement("LI");
+		node.setAttribute("id",id);
+		var textnode = document.createTextNode("new object notification "+idclass+" id:"+id);  
+		node.style.color="gray"; 
+		node.style.fontSize="small";
+		node.appendChild(textnode);   
+		root.appendChild(node);    */ 
+    }
+    
+    delvalue(id,propname,value){}
+    
+    delobject(idclass,id){}
+}
+
+var om=new OntologieMap();	
+var indstore=new individual_store(om);
+var stlis=new guiListener();
+var engine=new jsengine(om,indstore,stlis);
+var business_rules= new rules(engine);
+engine.setRules(business_rules);
+
+function tagetForm(classid){
+    console.log("build form of "+om.getClass(classid).name);
+	var root = document.getElementById("targetClass");                 
+	var node = document.createElement("LI");
+	var clsdef=om.getClass(classid);
+	var inhtml="";
+	for(var prop of clsdef.getAllProperties()){
+	    inhtml+=prop.name+", ";
+	}
+	var textnode = document.createTextNode("Build form of class:"+clsdef.name+" properties:"+inhtml);  
+	node.appendChild(textnode);   
+	root.appendChild(node);   
+} 
+
+var t=new test(business_rules,engine);
+
+console.log("TIME LOAD "+(new Date().getTime()-ini));
+var areaMap=indstore.getClassMap(4);//4 is id class of area (area is a group of menu)
+var areasHtml="<UL>";
+areaMap.forEach( (area, key) => {
+    areasHtml+="<LI>"+area.rdn+"</LI><UL>";
+    var utasksMap=indstore.getClassMap(5);//5 is id class of UTASK (a menu), and target class is object properties wich link to range class
+    utasksMap.forEach( (utask, key) => {
+	    areasHtml+="<LI style='text-decoration:underline' onclick='tagetForm("+utask.targetClass+",\""+utask.id+"\")'>"+utask.rdn+"</LI>";
+    });
+    areasHtml+="</UL>";
+});
+areasHtml+="</UL>";
+
+document.getElementById("menu").innerHTML=areasHtml; 
+//var rows=business_rules.order_item_amount();
+console.log("PRUEBA SET");
+engine.setid(427,"427.2","cantidad",10);
+
+
+//var tf=new tableform();
+//tf.render(document.getElementById("table"),1,124,"124.1",477,"prueba");
+console.log("TIME END "+(new Date().getTime()-ini));
+</script>
+
+    
+</body>
+</html>

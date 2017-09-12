@@ -1,0 +1,19 @@
+Agrupacion se basa en un indice y su clave.
+Por cada nombre key:indice/nombre agrupacion/clave indexacion se crea una lista donde cada elemento contribuye con su key, asi cuando hay cambios, puedo hacer reverse de valor anterior para uan key antes de volver calcular su contribucion.
+
+Un mismo individuo puede tener indexado varios aspectos (ej entrada salida), asi que la hacer check, o indexar, debe devolver un array de todos los keys indexados para ese individuo
+
+- (opcion) check debe indexar individuo
+- get key devolver un array de keys, y cada key es un objeto key
+- funcion agrupar basado en keys con reverse
+
+
+-comprobar que al crear individuo, el log hace check index y eso provoca su indexado
+Por otra parte si el individuo indexado es contexto de otro indice, debe propagar. Para ello propagate index comprueba que listener tiene y los llama
+
+Ademas, el check debe procesar la accion agrupacion, y se registrara en log event normalmente, que finalmente llamara a accion consequence de acuerdo a prioridad, por tanto action es en el momento
+
+Una regla menos prioritaria puede ser que cuando se vaya a disparar no se cumple condiciones, debido a una regla previa, pero la regla debe hacer la comprobacion necesaria en base a datos actualizados
+Unicamente se utilizan datos acumulados den agrupaciones, pero el action se procesa y actualiza al momento
+
+Modelar regla precarga stock que tiene acumulaciones de mapas, que podrian ser mas de un indice en la misma regla, y tb actualizacion stock, tb son diferentes acumulaciones o indices
