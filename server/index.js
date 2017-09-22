@@ -181,10 +181,6 @@ class Index{
 	this.group_def.set(rule_name,{group_by:group_by,action_handle:action_handle,reverse_handle:reverse_handle,consequence_handle:consequence_handle,priority:prior})
     }
 
-    individual(domain,filter,keyproperties){
-
-    }
-
 
     get_key(individual){    
 	return individual.id;

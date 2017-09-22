@@ -13,28 +13,28 @@ class test{
 
 	load_metadata(){
 		var jsonprop=[
-			{name:"rdn",id:1,datatype:Constants.IDTO_STRING},
+			{name:"rdn",id:2,datatype:Constants.IDTO_STRING},
 			{name:"base",id:136,datatype:Constants.IDTO_DOUBLE},
-			{name:"estado",id:539,datatype:299},			
+			{name:"estado",id:539,objtype:299},			
 			{name:"cantidad",id:104,datatype:Constants.IDTO_DOUBLE},	
 			{name:"precio",id:141,datatype:Constants.IDTO_DOUBLE},
 			{name:"importe",id:150,datatype:Constants.IDTO_DOUBLE},
-			{name:"linea",id:477,objtype:427},
-			{name:"cliente",id:488,objtype:488},
+			{name:"linea",id:477,objtype:112},
+			{name:"cliente",id:488,objtype:325},
 			{name:"targetClass",id:8,objtype:0},
 			{name:"myFunctionalArea",id:11,objtype:4},
 		]
 		
 		var jsonclass=[
-			{name:"FACTURA_A_CLIENTE",id:124,props:[1,136,477,150,488]},
-			{name:"TICKET_VENTA",id:125,props:[1,136,477,150,{id:488,oneof:[533]}]},
-			{name:"ESTADO",id:299,oneof:["299.1"],props:[1]},
-			{name:"CLIENTE_VARIOS",id:533,props:[1]},
-			{name:"CLIENTE",id:325,props:[1]},
-			{name:"LINEA_ARTICULOS",id:112,props:[1,104,141,150]},
-			{name:"LINEA_ARTICULOS_MATERIA",id:427,props:[1,104,141,150]},
-			{name:"FUNCTIONAL_AREA",id:4,props:[1]},
-			{name:"UTASK",id:5,props:[1,11]},
+			{name:"FACTURA_A_CLIENTE",id:124,props:[2,136,477,150,488]},
+			{name:"TICKET_VENTA",id:125,props:[2,136,477,150,{id:488,oneof:[533]}]},
+			{name:"ESTADO",id:299,oneof:["299.1"],props:[2]},
+			{name:"CLIENTE_VARIOS",id:533,props:[2]},
+			{name:"CLIENTE",id:325,props:[2]},
+			{name:"LINEA_ARTICULOS",id:112,props:[2,104,141,150]},
+			{name:"LINEA_ARTICULOS_MATERIA",id:427,props:[2,104,141,150]},
+			{name:"FUNCTIONAL_AREA",id:4,props:[2]},
+			{name:"UTASK",id:5,props:[2,11]},
 		]
 
 	
