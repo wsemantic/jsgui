@@ -101,7 +101,15 @@ areaMap.forEach( (area, key) => {
 });
 areasHtml+="</UL>";
 
-document.getElementById("menu").innerHTML=areasHtml; 
+//document.getElementById("menu").innerHTML=areasHtml;
+let txt=om.class_to_xml("FACTURA_A_CLIENTE"); 
+var preEl = document.createElement("pre");
+var codeEl = document.createElement("code");
+codeEl.appendChild(document.createTextNode(txt));
+preEl.appendChild(codeEl);
+document.body.appendChild(preEl);
+
+//document.getElementById("menu").innerHTML=txt;
 //var rows=business_rules.order_item_amount();
 console.log("PRUEBA SET");
 engine.setid(427,"427.2","cantidad",10);
