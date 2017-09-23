@@ -30,13 +30,13 @@ class ClassDef{
 
 }
 
-class Constants{
-	constructor(){
-		this.IDTO_STRING=7923;
-		this.IDTO_BOOLEAN=7929;
-		this.IDTO_INT=7920;
-		this.IDTO_DOUBLE=7910;
-	}
+function Constants(){
+	/*constructor(){
+		Constants.IDTO_STRING=7923;
+		Constants.IDTO_BOOLEAN=7929;
+		Constants.IDTO_INT=7920;
+		Constants.IDTO_DOUBLE=7910;
+	}*/
 }
 
 class PropertyDef{	
@@ -71,13 +71,13 @@ class PropertyDef{
 	
 	getDataPropertyTypeName() {
 		switch(this.type){
-		case this.IDTO_STRING:
+		case Constants.IDTO_STRING:
 			return "TEXT";
-		case this.IDTO_BOOLEAN:
+		case Constants.IDTO_BOOLEAN:
 			return "BOOL";
-		case this.IDTO_INT:
+		case Constants.IDTO_INT:
 			return "INT";
-		case this.IDTO_DOUBLE:
+		case Constants.IDTO_DOUBLE:
 			return "FLOAT";
 		};
 	}
@@ -115,6 +115,11 @@ class PredefinedUnit {
 class OntologieMap{
 
 	constructor(server){
+		Constants.IDTO_STRING=7923;
+		Constants.IDTO_BOOLEAN=7929;
+		Constants.IDTO_INT=7920;
+		Constants.IDTO_DOUBLE=7910;
+		
 		this.classByName= new Map();//HashMap<String,ClassDef> 
 		this.classById= new Map();//new HashMap<Integer,ClassDef>();
 		this.rdnMap = new Array();//new ArrayList<rdnindividual>();
