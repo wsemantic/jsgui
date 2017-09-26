@@ -26,9 +26,9 @@ class test{
 		]
 		
 		var jsonclass=[
-			{name:"FACTURA_A_CLIENTE",id:124,props:[2,136,477,150,488]},
+			{name:"FACTURA_A_CLIENTE",id:124,props:[2,136,477,150,488,539]},
 			{name:"TICKET_VENTA",id:125,props:[2,136,477,150,{id:488,oneof:[533]}]},
-			{name:"ESTADO",id:299,oneof:["299.1"],props:[2]},
+			{name:"ESTADO",id:299,oneof:["299.1","299.2"],props:[2]},
 			{name:"CLIENTE_VARIOS",id:533,props:[2]},
 			{name:"CLIENTE",id:325,props:[2]},
 			{name:"LINEA_ARTICULOS",id:112,props:[2,104,141,150]},
@@ -40,7 +40,8 @@ class test{
 	
         	var jsoninheritance=[	{class:427,super:[112]}, 
         	    			{class:533,super:[325]}, 
-        	    			{class:125,super:[124]}//ticket is specialized from factura
+        	    			{class:125,super:[124]}// ticket is specialized
+													// from factura
         			    ];
         		
         	this.jse.getOntologieMap().load(jsonprop,jsonclass,jsoninheritance);
@@ -50,15 +51,23 @@ class test{
 	load_individual(){
 	    
     	var jsonind=[	{class:299,id:"299.1",rdn:"Planificado"},
-			{class:533,id:"533.1",rdn:"0",deuda:0,regimen_iva:"12.3"},
-			
-			//lineas
-			//factura
-			//menus (UTASK)
-			{class:4,id:"4.1",rdn:"4.1",rdn:"Tiendas"},//menu group Tiendas
-			{class:5,id:"5.1",rdn:"nuevo ticket",myFunctionalArea:"4.1",targetClass:125},//here target class range is overwritten to ticket
-			{class:5,id:"5.2",rdn:"Tickets",myFunctionalArea:"4.1",targetClass:125}
-	];
+    					{class:299,id:"299.2",rdn:"Programado"},
+						{class:533,id:"533.1",rdn:"0",deuda:0,regimen_iva:"12.3"},
+						
+						// lineas
+						// factura
+						// menus (UTASK)
+						{class:4,id:"4.1",rdn:"4.1",rdn:"Tiendas"},// menu group Tiendas
+						{class:5,id:"5.1",rdn:"nuevo ticket",myFunctionalArea:"4.1",targetClass:125},// here
+																										// target
+																										// class
+																										// range
+																										// is
+																										// overwritten
+																										// to
+																										// ticket
+						{class:5,id:"5.2",rdn:"Tickets",myFunctionalArea:"4.1",targetClass:125}
+					];
     	
     	this.jse.propagate_state(false);
     	

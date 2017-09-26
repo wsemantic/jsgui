@@ -1,9 +1,13 @@
 class ClassDef{	
-	constructor(id,name,isAbstract){
+	constructor(id,name,isAbstract,individual_enum_list){
 		this.id=id;
 		this.name=name;
 		this.isAbstract=isAbstract;
 		this.propList=new Map();//propid>PropertyDef
+		this.individual_enum_list=[];
+		if(individual_enum_list!=undefined && individual_enum_list!=null){
+			this.individual_enum_list=individual_enum_list;
+		}
 	}
 
 	addProperty( pdef){
@@ -26,6 +30,10 @@ class ClassDef{
 	getProperty(id){
 		//PropertyDef
 		return propList.get(id);
+	}
+	
+	get_enum_list(){
+		return this.individual_enum_list;
 	}
 
 }
@@ -138,8 +146,12 @@ class OntologieMap{
 				console.log(j); 
 			});
 		}
+	
 	}
 
+	set_individual_store(is){
+		this.individual_store=is;
+	}
 
 	load(jsonprops,jsonclasses,jsoninheritances){
 		for(var jsprop of jsonprops){
@@ -155,9 +167,9 @@ class OntologieMap{
 		}
 
 		for(var jsoncls of jsonclasses){
-			let clsDef= new ClassDef(jsoncls.id,jsoncls.name,false);
+			let clsDef= new ClassDef(jsoncls.id,jsoncls.name,false,jsoncls.oneof);
 			this.addClass(clsDef);
-
+			
 			for(let propElem of jsoncls.props){			    
 				let pdef;
 				let typename=typeof(propElem);
@@ -203,7 +215,7 @@ class OntologieMap{
 			sup_list.push(parseInt(jsonh.super));
 		}
 	}
-
+	
 	is_specialized_of(class_child,class_sup){
 		if(class_child===class_sup) return true;
 		let sup_list=this.hierarchy.get(class_child);
@@ -215,7 +227,10 @@ class OntologieMap{
 		return false;	    
 	}
 
-
+	classId_of_rdn(rdn){
+		return parseInt(rdn.split(".")[0]);			
+	}
+	
 	getDomain(property){ //Iterator<Integer> 
 		var pdef=this.propertyByID.get(property);
 		return pdef.domains;		
@@ -243,12 +258,19 @@ class OntologieMap{
 		for(let pdef of cls.getAllProperties()){
 			let common=" name=\""+pdef.getName()+"\" ID=\""+pdef.getIdProp()+"\" " ;
 			if(!pdef.isObjectProperty()){
-				res+="\n<DATAPROP"+common+" type=\""+pdef.getDataPropertyTypeName()+"\"/>";				
+				res+="\n\t<DATAPROP"+common+" type=\""+pdef.getDataPropertyTypeName()+"\"/>";				
 			}else{
 				//TODO En caso de haber especializados de rango, me quedo con la superior, y los formularios incluiran todo los de los hijos. Y en caso haber oneof deberia quedarme con un ID virtual
+				
 				let idrange=Array.from(pdef.getObjectPropertyRanges())[0];
 				let clsRange=this.getClass(idrange);
-				res+="\n<OBJECTPROP"+common+" RANGE_NAME=\""+clsRange.getName()+"\" RANGEID=\""+idrange+"\">";
+				let ind_enum_list=clsRange.get_enum_list();
+				res+="\n\t<OBJECTPROP"+common+" RANGE_NAME=\""+clsRange.getName()+"\" RANGEID=\""+idrange+"\" "+(ind_enum_list.length==0?"/":"")+">";
+				for(let id of ind_enum_list){
+					let ind=this.individual_store.getIndivById(id);
+					res+="\n\t\t<ONEOF id=\""+id+"\" name=\""+ind.rdn+"\" />";
+				}
+				if(ind_enum_list.length>0) res+="\n\t</OBJECTPROP>";
 			}
 		}
 		

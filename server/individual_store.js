@@ -39,7 +39,7 @@ class individual_store{
 
 	getIndivById(id,clsid){
 		if(clsid===undefined){
-			clsid=parseInt(id.split(".")[0]);
+			clsid=this.ontologieMap.classId_of_rdn(id);
 		}
 		var clsmap=this.getClassMap(clsid);
 		return clsmap.get(id);

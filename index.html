@@ -67,6 +67,7 @@ class guiListener extends storeListener{
 
 var om=new OntologieMap();	
 var indstore=new individual_store(om);
+om.set_individual_store(indstore);
 var stlis=new guiListener();
 var engine=new jsengine(om,indstore,stlis);
 var business_rules= new rules(engine);
