@@ -3,15 +3,18 @@
  */
 
 class test{
-    	constructor(rules,engine){
-    	    this.r=rules;
+    	constructor(rules,engine, comjs){
+    		this.comjs=comjs;
+    		this.r=rules;
     	    this.jse=engine;
-    	    this.load_metadata();
-    	    this.jse.init();
-    	    this.load_individual();
+    	    //this.load_metadata();
+    	    	    
+    	}
+    	init(comjs,handle){
+    		 comjs.getXMLfile("xml/ruleengine.xml",handle);   
     	}
 
-	load_metadata(){
+	/*load_metadata(){
 		var jsonprop=[
 			{name:"rdn",id:2,datatype:Constants.IDTO_STRING},
 			{name:"base",id:136,datatype:Constants.IDTO_DOUBLE},
@@ -45,20 +48,22 @@ class test{
         			    ];
         		
         	this.jse.getOntologieMap().load(jsonprop,jsonclass,jsoninheritance);
-	}
+	}*/
 	
 	
 	load_individual(){
 	    
-    	var jsonind=[	{class:299,id:"299.1",rdn:"Planificado"},
-    					{class:299,id:"299.2",rdn:"Programado"},
+    	var jsonind=[	//{class:299,id:"299.1",rdn:"Planificado"},
+    					//{class:299,id:"299.2",rdn:"Programado"},
 						{class:533,id:"533.1",rdn:"0",deuda:0,regimen_iva:"12.3"},
 						
 						// lineas
 						// factura
 						// menus (UTASK)
-						{class:4,id:"4.1",rdn:"4.1",rdn:"Tiendas"},// menu group Tiendas
-						{class:5,id:"5.1",rdn:"nuevo ticket",myFunctionalArea:"4.1",targetClass:125},// here
+						{class:4,id:"4.1",rdn:"Tiendas"},// menu group Tiendas
+						{class:4,id:"4.2",rdn:"Ventas"},// menu group Tiendas
+						{class:5,id:"5.1",rdn:"Facturas",myFunctionalArea:"4.2",targetClass:125},
+						{class:5,id:"5.2",rdn:"nuevo ticket",myFunctionalArea:"4.1",targetClass:125},// here
 																										// target
 																										// class
 																										// range
@@ -66,7 +71,7 @@ class test{
 																										// overwritten
 																										// to
 																										// ticket
-						{class:5,id:"5.2",rdn:"Tickets",myFunctionalArea:"4.1",targetClass:125}
+						{class:5,id:"5.3",rdn:"Tickets",myFunctionalArea:"4.1",targetClass:125}
 					];
     	
     	this.jse.propagate_state(false);
@@ -81,9 +86,9 @@ class test{
 	
     createLineas(cls,jsonarr){
 	var lineas= new Array();
-	for(var pos=1;pos<=1000;pos++){
+	for(var pos=1;pos<=1;pos++){
         	var rdn=""+cls+"."+pos;
-        	jsonarr.push({class:427,id:rdn,rdn:rdn,cantidad:1,precio:pos});
+        	jsonarr.push({class:427,id:rdn,rdn:rdn,cantidad:2,precio:pos+10});
         	
         	lineas.push(rdn);
 	}

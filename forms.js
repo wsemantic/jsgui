@@ -12,14 +12,14 @@ class formfactory{
     render(targetnode,type,utask,classid,ido,property,value,label){
 	var res;
 	switch(type){
-	case Constants.IDTO_STRING:
+	case IDTO_STRING:
 	    
 	    res=document.createElement('INPUT');
 	    res.setAttribute("type","text");
 	    res.setAttribute("name",label);
 	    if(value!=null && typeof(value)!="undefined") res.setAttribute("value",value);
 	    	    
-	case Constants.IDTO_BOOLEAN:
+	case IDTO_BOOLEAN:
 	    
 	
 	default:

@@ -11,116 +11,85 @@
 <script type="text/javascript" src="server/test.js"></script>   
 <script type="text/javascript" src="server/jsengine.js"></script>
 <script type="text/javascript" src="forms.js"></script>
+<script type="text/javascript" src="gui/storelistener.js"></script>
+<script type="text/javascript" src="gui/domsinc.js"></script>
 <script type="text/javascript" src="server/index.js"></script>
 <script type="text/javascript" src="server/Filter_Property.js"></script>
+<script type="text/javascript" src="server/common.js"></script>
 
-<script src="lib/handsontable.full.js"></script>
-<link rel="stylesheet" media="screen" href="css/handsontable.full.css">
+<!-- prefix free to deal with vendor prefixes -->
+<script src="http://thecodeplayer.com/uploads/js/prefixfree-1.0.7.js" type="text/javascript" type="text/javascript"></script>
+<script src="http://thecodeplayer.com/uploads/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+
+<!-- ><script src="lib/handsontable.full.js"></script>
+<link rel="stylesheet" media="screen" href="css/handsontable.full.css">-->
+
+<link rel="stylesheet" href="jqueryaccordionmenu/css/accordionmenu.css" type="text/css" media="screen" />
 </head>
-<body>
-<div id="reactroot"></div>
+<body >
 <div id="menu"></div>
-<div id="targetClass"></div>
 <br>
-<div id="root"></div>
-<div id="table"></div>
+<div id="menu"></div>
+<div id="target"></div>
 <script>
-var doc=document;
 var ini = new Date().getTime();
-class guiListener extends storeListener{
-    set(idcls,id,propname,value){
-		/*var node = doc.getElementById(id); 
-		if(node!=undefined && node!=null){
-			node.innerHTML=node.innerHTML+" class:"+idcls+" "+propname+": "+value;
+
+console.log("TIME END "+(new Date().getTime()-ini));
+
+function init(){	
+	let stlis=new domsinc(document);
+	let comjs=new Common(stlis);
+
+	let vertical_menu_handle=function(){
+		//slide up all the link lists
+		$("#accordian ul ul").slideUp();
+		//slide down the link list below the h3 clicked - only if its closed
+		if(!$(this).next().is(":visible")){
+			$(this).next().slideDown();
 		}
+	};
+
+	let target_handle=function(event){
+		let id=event.srcElement.id;
+		let utask=comjs.indstore.getIndivById(id);
+		let targetclass=utask.targetClass;
 		
-		var root = document.getElementById("root");                 
-		var node = document.createElement("LI");
-		node.setAttribute("id",id);
-		var textnode = document.createTextNode("set object notification "+id+" prop:"+propname+" val:"+value);  
-		node.style.color="gray"; 
-		node.style.fontSize="small";
-		node.appendChild(textnode);   
-		root.appendChild(node);     */
-    }
-    
-    addvalue(id,propname,value){
-		var node = document.getElementById(id);                 	
-		node.innerHTML=node.innerHTML+" "+propname+": "+value;      
-	}
-    
-    new_individual(idclass,id){
-		/*var root = document.getElementById("root");                 
-		var node = document.createElement("LI");
-		node.setAttribute("id",id);
-		var textnode = document.createTextNode("new object notification "+idclass+" id:"+id);  
-		node.style.color="gray"; 
-		node.style.fontSize="small";
-		node.appendChild(textnode);   
-		root.appendChild(node);    */ 
-    }
-    
-    delvalue(id,propname,value){}
-    
-    delobject(idclass,id){}
+		let idrange=Array.from(targetclass.getObjectPropertyRanges())[0];									
+		let clsRange=comjs.om.getClass(idrange);
+		let xmldatastr= comjs.jse.class_to_xml(clsRange.name);
+		let xmldata= parser.parseFromString(xmldatastr,"text/xml");
+		
+		comjs.transform(xmldata,"xsl/search.xsl",document,"target");
+		/*TODO
+		* Trasformar xml de column prop
+		* Comenzar por campo de texto, y boton buscar, y tabla resultado
+		* despues campo rdn de object prop de acuerdo a columm prop
+		* Finder no sirve para tpv
+		*/
+		
+		//comjs.jse.setid(null,"427.1","cantidad",3);					
+	};
+	
+	var t=new test(comjs.business_rules,comjs.jse,comjs);
+	t.init(comjs,function(response){
+				comjs.init(response);				
+				
+			    t.load_individual();
+				let parser = new DOMParser();
+				let xmldatastr= comjs.jse.individual_to_xml("UTASK",["myFunctionalArea"]);
+				let xmldata= parser.parseFromString(xmldatastr,"text/xml");
+				comjs.transform(xmldata,"xsl/menu.xsl",document,"menu",
+					[
+						{select:"#accordian h3",	handle:vertical_menu_handle},
+						{select:"[clsname='UTASK']",handle:target_handle}
+					]					
+				);
+			}
+	    );
 }
 
-var om=new OntologieMap();	
-var indstore=new individual_store(om);
-om.set_individual_store(indstore);
-var stlis=new guiListener();
-var engine=new jsengine(om,indstore,stlis);
-var business_rules= new rules(engine);
-engine.setRules(business_rules);
 
-function tagetForm(classid){
-    console.log("build form of "+om.getClass(classid).name);
-	var root = document.getElementById("targetClass");                 
-	var node = document.createElement("LI");
-	var clsdef=om.getClass(classid);
-	var inhtml="";
-	for(var prop of clsdef.getAllProperties()){
-	    inhtml+=prop.name+", ";
-	}
-	var textnode = document.createTextNode("Build form of class:"+clsdef.name+" properties:"+inhtml);  
-	node.appendChild(textnode);   
-	root.appendChild(node);   
-} 
-
-var t=new test(business_rules,engine);
-
-console.log("TIME LOAD "+(new Date().getTime()-ini));
-var areaMap=indstore.getClassMap(4);//4 is id class of area (area is a group of menu)
-var areasHtml="<UL>";
-areaMap.forEach( (area, key) => {
-    areasHtml+="<LI>"+area.rdn+"</LI><UL>";
-    var utasksMap=indstore.getClassMap(5);//5 is id class of UTASK (a menu), and target class is object properties wich link to range class
-    utasksMap.forEach( (utask, key) => {
-	    areasHtml+="<LI style='text-decoration:underline' onclick='tagetForm("+utask.targetClass+",\""+utask.id+"\")'>"+utask.rdn+"</LI>";
-    });
-    areasHtml+="</UL>";
-});
-areasHtml+="</UL>";
-
-//document.getElementById("menu").innerHTML=areasHtml;
-let txt=om.class_to_xml("FACTURA_A_CLIENTE"); 
-var preEl = document.createElement("pre");
-var codeEl = document.createElement("code");
-codeEl.appendChild(document.createTextNode(txt));
-preEl.appendChild(codeEl);
-document.body.appendChild(preEl);
-
-//document.getElementById("menu").innerHTML=txt;
-//var rows=business_rules.order_item_amount();
-console.log("PRUEBA SET");
-engine.setid(427,"427.2","cantidad",10);
-
-
-//var tf=new tableform();
-//tf.render(document.getElementById("table"),1,124,"124.1",477,"prueba");
-console.log("TIME END "+(new Date().getTime()-ini));
 </script>
-
-    
+ 
 </body>
 </html>

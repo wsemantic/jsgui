@@ -8,15 +8,6 @@ class threadData{
 	}
 }
 
-class storeListener{
-	new_individual(clsdef_name,indiv_id){
-
-	}
-	set(indivudual,property,value){
-
-	}	
-}
-
 class rule_data{
 	constructor(rule_name,priority,handle_function,dependent_properties){
 		this.rule_name=rule_name;
@@ -37,11 +28,19 @@ class jsengine{
 		this.group_by_index=new Map();// key rule name>index
 		this.index_map=new Map();
 		this.event_map=new Map();// key index name>dependent property>handle
-									// func
+								// func
 		this.propagate_enable=true;
 		this.accumulation=new Map();
 	}
 
+	class_to_xml(class_name){
+		return this.om.class_to_xml(class_name);
+	}
+	
+	individual_to_xml(class_name,groupby){
+		return this.indstore.individual_to_xml(class_name,groupby);
+	}
+	
 	new_accumulation(key,accum_value){	
 		this.accumulation.set(key,new Accum_var(accum_var));
 	}
@@ -149,8 +148,9 @@ class jsengine{
 
 	setid(classid,id,property,value){
 		var indiv=this.indstore.getIndivById(id,classid);
-		indiv[property]=value;
-		this.storelistener.set(indiv.id,property,value);					
+		this.set(indiv,property,value);
+		//indiv[property]=value;
+		//this.storelistener.set(classid,indiv.id,property,value);					
 	}
 
 	set(indiv,property_name,value){	     
