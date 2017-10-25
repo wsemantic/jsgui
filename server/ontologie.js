@@ -181,6 +181,7 @@ class OntologieMap{
 		comjs.om.loadXMLProperties(xmldata);
 		comjs.om.loadXMLHierarchy(xmldata);
 		comjs.om.loadXMLClasses(comjs.jse,xmldata);
+		comjs.om.loadColumns(comjs.jse,xmldata);
 		comjs.om.loadXMLIndividualFacts(comjs.jse,xmldata.getElementsByTagName("ENUMERATEDCLASSES")[0]);
     }
     
@@ -336,6 +337,94 @@ class OntologieMap{
 	loadColumns(jse,root){
 		let insroot=root.getElementsByTagName("COLUMNS");
     	let insarr=insroot[0].getElementsByTagName("COLUMN");
+    	let oldClass=0,oldClsParent=0;
+    	let clsDef;
+    	let oldprop=0;
+
+       	let adaptedIndiv=[];
+       	let columngroup=new Set();
+       	let columorder=new Set();
+       	
+    	for(let pos=0;pos<insarr.length;pos++){
+    		let column=insarr[pos];
+    		let idClass= parseInt(column.getAttribute("CLASS"));
+    		let idParent= column.getAttribute("CLASSPARENT");
+    		
+    		if(idParent==undefined) idParent=0;
+    		else idParent= parseInt(idParent);
+    		
+    		let path= column.getAttribute("PROPPATH");
+			let order=parseInt(column.getAttribute("ORDER"));
+			
+			let keygr=""+idParent+"#"+idClass;
+			let keyorder=keygr+"#"+path;
+			
+			//TODO IDORDER, IDROOT son atributos añadidos a metadata y discontinuado por afectar al rendimiento, habria que actualizar todas las bases de datos con nueva s_columnproperties
+			let idroot=parseInt(column.getAttribute("IDROOT"))
+			let idoroot=""+this.codeLegacyIdo(idroot,idto,false)
+			let idtoroot=this.getIdClassForName("COLUMNAS_TABLA");
+			
+			if(!columngroup.has(keygr)){
+				let grdn=new Element("NEWFACT");
+				
+				grdn.setAttribute("IDTO",""+idto);
+				grdn.setAttribute("NAME","COLUMNAS_TABLA");
+
+				grdn.setAttribute("IDO",idtoroot);
+				grdn.setAttribute("PROP",""+RDN);
+				grdn.textContent(""+idroot);
+				adaptedIndiv.push(grdn);
+				
+				if(idParent>0){
+					let parent=new Element("NEWFACT");
+					parent.setAttribute("IDTO",""+idto);
+					parent.setAttribute("NAME","COLUMNAS_TABLA");
+					parent.setAttribute("IDO",ido);
+					parent.setAttribute("PROP",""+this.getPropertyId("dominio"));
+					parent.setAttribute("VALCLS",idParent);
+					adaptedIndiv.push(parent);
+				}								
+			}
+			
+			let propcolumn=new Element("NEWFACT");
+			propcolumn.setAttribute("IDTO",""+idtoroot);
+			propcolumn.setAttribute("NAME","COLUMNAS_TABLA");
+			let idorder=parseInt(propcolumn.getAttribute("IDORDER"))
+			let idoorder=""+this.codeLegacyIdo(idorder,idtorder,false);
+			
+			propcolumn.setAttribute("IDO",""+idoroot);
+			propcolumn.setAttribute("PROP",""+this.getPropertyId("columnas"));
+			propcolumn.setAttribute("VALUE",idoorder);
+			propcolumn.setAttribute("VALUECLS",idParent);
+			adaptedIndiv.push(propcolumn);
+			//
+			column.setAttribute("IDTO",""+idtorder);
+			column.setAttribute("NAME","ORDEN_CAMPO_CON_FILTRO");			
+			column.setAttribute("IDO",""+idoorder);
+			column.setAttribute("PROP",""+this.getPropertyId("ruta_propiedad"));
+			column.textContent(path);
+			column.setAttribute("VALUECLS",""+IDTO_STRING);
+			adaptedIndiv.push(column);
+			//
+			let orderfact=new Element("NEWFACT");
+			orderfact.setAttribute("IDTO",""+idtorder);
+			orderfact.setAttribute("NAME","ORDEN_CAMPO_CON_FILTRO");			
+			orderfact.setAttribute("IDO",""+idoorder);
+			orderfact.setAttribute("PROP",""+this.getPropertyId("orden"));
+			orderfact.setAttribute("QMIN",""+order);
+			orderfact.setAttribute("QMAX",""+order);
+			orderfact.setAttribute("VALUECLS",""+IDTO_INT);
+			adaptedIndiv.push(orderfact);
+    	}
+	}
+	
+	//terminar access
+	//añadir grupos
+	//añadir order props
+	
+	loadAccess(jse,root){
+		let insroot=root.getElementsByTagName("ACCESSES");
+    	let insarr=insroot[0].getElementsByTagName("ACCESS");
     	let oldClass=0,oldClsParent=0;
     	let clsDef;
     	let oldprop=0;
