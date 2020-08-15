@@ -85,14 +85,14 @@ class test{
     }
 	
     createLineas(cls,jsonarr){
-	var lineas= new Array();
-	for(var pos=1;pos<=1;pos++){
-        	var rdn=""+cls+"."+pos;
-        	jsonarr.push({class:427,id:rdn,rdn:rdn,cantidad:2,precio:pos+10});
-        	
-        	lineas.push(rdn);
-	}
-	jsonarr.push({class:124,id:"124.1",rdn:"124.1",base:100,linea:lineas});
-	return jsonarr;
+		var lineas= new Array();
+		for(var pos=1;pos<=1;pos++){
+				var idlin=""+cls+"."+pos;
+				jsonarr.push({class:427,id:idlin,rdn:idlin,cantidad:2,precio:pos+10});
+				
+				lineas.push(idlin);
+		}
+		jsonarr.push({class:124,id:"124.1",rdn:"124.1",base:100,linea:lineas});
+		return jsonarr;
     }
 }

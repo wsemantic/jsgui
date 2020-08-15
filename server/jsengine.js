@@ -37,6 +37,20 @@ class jsengine{
 		return this.om.class_to_xml(class_name);
 	}
 	
+	get_filter(idtask,class_name){
+		let rdn_filter=idtask+"."+this.om.getClassByName(class_name).id;
+		let filter=this.indstore.getIndByRdn(IDTO_FILTER,rdn_filter);
+		if(filter==undefined || filter==null){
+			let idfilter=this.indstore.increase_filter_count();
+			filter={class:IDTO_FILTER,id:idfilter,rdn:rdn_filter};
+			this.om.build_class(filter,class_name,1,MAX_DEEP_FILTER_LEVEL);
+			this.indstore.insert(filter);
+		}
+			
+		return filter;
+		
+	}
+	
 	individual_to_xml(class_name,groupby){
 		return this.indstore.individual_to_xml(class_name,groupby);
 	}

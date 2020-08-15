@@ -49,6 +49,15 @@ class PropertyDef{
 		this.domains=new Set();
 		this.qmin=0;
 		this.qmax=-1;
+		this.inverse=0;
+	}
+	
+	getInverse(){
+		return this.inverse;
+	}
+	
+	setInverse(idp){
+		this.inverse=idp;
 	}
 	
 	isObjectProperty(){
@@ -146,6 +155,7 @@ class OntologieMap{
 		this.magnUnits=new Map();//new HashMap<String,ArrayList<PropertyUnit>>();
 		this.propMagnitudes=new Map();//new HashMap<String,ArrayList<PredefinedUnit>>();
 		this.hierarchy= new Map();//key class id, value array superior classes
+		this.specialized= new Map();//key class id, value array specialized classes
 		//server=http://localhost:81/wsemantic_server;
 		if(server!=null && typeof(server)!="undefined"){
 			fetch(server+"?selection=init&query=METADATA").then(function(response) { 
@@ -155,6 +165,7 @@ class OntologieMap{
 			});
 		}
 	
+		this.classByName.set(CLSNAME_FILTER,IDTO_FILTER);
 	}
 	
 	set_individual_store(is){
@@ -174,15 +185,22 @@ class OntologieMap{
 				this.hierarchy.set(idto,sup_list);
 			}
 			sup_list.push(parseInt(idtoSup));
+			
+			let child_list=this.specialized.get(idtoSup);
+			if(child_list==undefined){
+				child_list=[];
+				this.specialized.set(idtoSup,child_list);
+			}
+			child_list.push(parseInt(idto));			
     	}
 	}
     		
     loadXMLMetadata(comjs,xmldata){
-		comjs.om.loadXMLProperties(xmldata);
-		comjs.om.loadXMLHierarchy(xmldata);
-		comjs.om.loadXMLClasses(comjs.jse,xmldata);
-		comjs.om.loadColumns(comjs.jse,xmldata);
-		comjs.om.loadXMLIndividualFacts(comjs.jse,xmldata.getElementsByTagName("ENUMERATEDCLASSES")[0]);
+    	this.loadXMLProperties(xmldata);
+		this.loadXMLHierarchy(xmldata);
+		this.loadXMLClasses(comjs.jse,xmldata);
+		this.loadColumns(comjs.jse,xmldata);
+		this.loadXMLIndividualFacts(comjs.jse,xmldata.getElementsByTagName("ENUMERATEDCLASSES")[0]);
     }
     
 	loadXMLProperties(propxml){
@@ -202,6 +220,9 @@ class OntologieMap{
     			
     		}
 			let propDef=new PropertyDef(id,name,type,isobjprop);
+			if(property.hasAttribute("PROPINV")){
+				propDef.setInverse(parseInt(property.getAttribute("PROPINV")));
+			}	
 			this.propertyByID.set(id,propDef);
 			this.propertyByName.set(name,propDef);			
     	}
@@ -213,8 +234,9 @@ class OntologieMap{
     	let oldClass=0;
     	let clsDef;
     	let oldprop=0;
-    	let propClassDef;
+
        	let adaptedIndiv=[];
+       	let propClassDef;
        	
     	for(let pos=0;pos<insarr.length;pos++){
     		let factinstance=insarr[pos];
@@ -281,7 +303,7 @@ class OntologieMap{
     			}
     			    			
     		}else if(virtual=="false"){
-    			
+    			//propClassDef is pdef for the class, with maybe range overwriten
     			propClassDef=this.loadInstanceProperty(operator,oldprop,clsDef,pdef,propClassDef,factinstance,"VALCLS");
 				if(oldprop!=propClassDef.id) clsDef.addProperty(propClassDef);
 				
@@ -293,6 +315,8 @@ class OntologieMap{
 	}
 	
 	loadInstanceProperty(operator,oldprop,clsDef,pdef,propClassDef,factinstance,valclstag){
+		//pdef is pdef from catalog
+		//propClassDef is pdef for the class, with maybe range overwriten
 		if(pdef.id!=oldprop) propClassDef=pdef.clone();
 		
 		if(operator=="AND"){
@@ -335,6 +359,8 @@ class OntologieMap{
 	}
 	
 	loadColumns(jse,root){
+		var parser = new DOMParser();
+		var xmlDoc = parser.parseFromString("", "text/xml");
 		let insroot=root.getElementsByTagName("COLUMNS");
     	let insarr=insroot[0].getElementsByTagName("COLUMN");
     	let oldClass=0,oldClsParent=0;
@@ -344,80 +370,76 @@ class OntologieMap{
        	let adaptedIndiv=[];
        	let columngroup=new Set();
        	let columorder=new Set();
+       	let idcount=0;
        	
     	for(let pos=0;pos<insarr.length;pos++){
     		let column=insarr[pos];
     		let idClass= parseInt(column.getAttribute("CLASS"));
-    		let idParent= column.getAttribute("CLASSPARENT");
+    		let idto_domain= column.getAttribute("CLASSPARENT");
     		
-    		if(idParent==undefined) idParent=0;
-    		else idParent= parseInt(idParent);
+    		if(idto_domain==undefined) idto_domain=0;
+    		else idto_domain= parseInt(idto_domain);
     		
     		let path= column.getAttribute("PROPPATH");
 			let order=parseInt(column.getAttribute("ORDER"));
 			
-			let keygr=""+idParent+"#"+idClass;
+			let keygr=""+idto_domain+"#"+idClass;
 			let keyorder=keygr+"#"+path;
 			
 			//TODO IDORDER, IDROOT son atributos añadidos a metadata y discontinuado por afectar al rendimiento, habria que actualizar todas las bases de datos con nueva s_columnproperties
-			let idroot=parseInt(column.getAttribute("IDROOT"))
-			let idoroot=""+this.codeLegacyIdo(idroot,idto,false)
-			let idtoroot=this.getIdClassForName("COLUMNAS_TABLA");
+			idcount++;//idroot=parseInt(column.getAttribute("IDROOT"))
+			let idto_colum_root=this.getIdClassForName("COLUMNAS_TABLA");
+			let ido_colum_root=""+this.codeLegacyIdo(idcount,idto_colum_root,false);
 			
 			if(!columngroup.has(keygr)){
-				let grdn=new Element("NEWFACT");
-				
-				grdn.setAttribute("IDTO",""+idto);
-				grdn.setAttribute("NAME","COLUMNAS_TABLA");
-
-				grdn.setAttribute("IDO",idtoroot);
-				grdn.setAttribute("PROP",""+RDN);
-				grdn.textContent(""+idroot);
+				let grdn=this.createFact(xmlDoc,idto_colum_root,ido_colum_root,RDN,null,null,IDTO_STRING,ido_colum_root);	
 				adaptedIndiv.push(grdn);
+
+				let ido_metaclass=this.codeLegacyIdo(this.getIdClassForName("CLASE"),idClass,false);
+				let table=this.createFact(xmlDoc,idto_colum_root,ido_colum_root,this.getPropertyId("tabla"),null,null,idClass,ido_metaclass);				
+				adaptedIndiv.push(table);
 				
-				if(idParent>0){
-					let parent=new Element("NEWFACT");
-					parent.setAttribute("IDTO",""+idto);
-					parent.setAttribute("NAME","COLUMNAS_TABLA");
-					parent.setAttribute("IDO",ido);
-					parent.setAttribute("PROP",""+this.getPropertyId("dominio"));
-					parent.setAttribute("VALCLS",idParent);
+				if(idto_domain>0){
+					let ido_domain=this.codeLegacyIdo(idto_domain,idto_domain,false);
+					let parent=this.createFact(xmlDoc,idto_colum_root,ido_colum_root,this.getPropertyId("dominio"),null,null,idto_domain,ido_domain);
 					adaptedIndiv.push(parent);
 				}								
 			}
 			
-			let propcolumn=new Element("NEWFACT");
-			propcolumn.setAttribute("IDTO",""+idtoroot);
-			propcolumn.setAttribute("NAME","COLUMNAS_TABLA");
-			let idorder=parseInt(propcolumn.getAttribute("IDORDER"))
-			let idoorder=""+this.codeLegacyIdo(idorder,idtorder,false);
+			let id_order=idcount;//como hay una propcolumn por cada parseInt(propcolumn.getAttribute("IDORDER"))
+			let idtorder=this.getIdClassForName("ORDEN_CAMPO_CON_FILTRO");
+			let idoorder=""+this.codeLegacyIdo(id_order,idtorder,false);
+
+			let order_rdn=this.createFact(xmlDoc,idtorder,idoorder,RDN,null,null,IDTO_STRING,idoorder);
+			adaptedIndiv.push(order_rdn);
 			
-			propcolumn.setAttribute("IDO",""+idoroot);
-			propcolumn.setAttribute("PROP",""+this.getPropertyId("columnas"));
-			propcolumn.setAttribute("VALUE",idoorder);
-			propcolumn.setAttribute("VALUECLS",idParent);
+			let propcolumn=this.createFact(xmlDoc,idto_colum_root,ido_colum_root,this.getPropertyId("columnas"),null,null,idtorder,idoorder);
 			adaptedIndiv.push(propcolumn);
-			//
-			column.setAttribute("IDTO",""+idtorder);
-			column.setAttribute("NAME","ORDEN_CAMPO_CON_FILTRO");			
-			column.setAttribute("IDO",""+idoorder);
-			column.setAttribute("PROP",""+this.getPropertyId("ruta_propiedad"));
-			column.textContent(path);
-			column.setAttribute("VALUECLS",""+IDTO_STRING);
-			adaptedIndiv.push(column);
-			//
-			let orderfact=new Element("NEWFACT");
-			orderfact.setAttribute("IDTO",""+idtorder);
-			orderfact.setAttribute("NAME","ORDEN_CAMPO_CON_FILTRO");			
-			orderfact.setAttribute("IDO",""+idoorder);
-			orderfact.setAttribute("PROP",""+this.getPropertyId("orden"));
-			orderfact.setAttribute("QMIN",""+order);
-			orderfact.setAttribute("QMAX",""+order);
-			orderfact.setAttribute("VALUECLS",""+IDTO_INT);
+			
+			let pathfact=this.createFact(xmlDoc,idtorder,idoorder,this.getPropertyId("ruta_propiedad"),null,null,IDTO_STRING);
+			adaptedIndiv.push(pathfact);
+		
+			let orderfact=this.createFact(xmlDoc,idtorder,idoorder,this.getPropertyId("orden"),order,order,IDTO_INT);
 			adaptedIndiv.push(orderfact);
     	}
+    	if(adaptedIndiv.length>0) this.loadXMLIndividualFacts(jse,adaptedIndiv);
 	}
 	
+	createFact(xmlDoc,idto,ido,propid,qmin,qmax,valcls,value){
+		let fact=xmlDoc.createElement("NEWFACT");
+		fact.setAttribute("IDTO",""+idto);
+		let metaclass=this.getClass(idto);
+		
+		fact.setAttribute("NAME",metaclass.getName());			
+		if(ido!=undefined && ido!=null) fact.setAttribute("IDO",""+ido);
+		fact.setAttribute("PROP",""+propid);
+		if(qmin!=undefined && qmin!=null) fact.setAttribute("QMIN",""+qmin);
+		if(qmin!=undefined && qmax!=null) fact.setAttribute("QMAX",""+qmax);
+		if(valcls!=undefined && valcls!=null) fact.setAttribute("VALUECLS",""+valcls);
+		
+		if(value!=undefined && value!=null) fact.textContent=""+value;
+		return fact;
+	}
 	//terminar access
 	//añadir grupos
 	//añadir order props
@@ -432,6 +454,7 @@ class OntologieMap{
        	let adaptedIndiv=[];
        	let columngroup=new Set();
        	let columorder=new Set();
+       	let idroot=0;
        	
     	for(let pos=0;pos<insarr.length;pos++){
     		let column=insarr[pos];
@@ -448,8 +471,8 @@ class OntologieMap{
 			let keyorder=keygr+"#"+path;
 			
 			//TODO IDORDER, IDROOT son atributos añadidos a metadata y discontinuado por afectar al rendimiento, habria que actualizar todas las bases de datos con nueva s_columnproperties
-			let idroot=parseInt(column.getAttribute("IDROOT"))
-			let idoroot=""+this.codeLegacyIdo(idroot,idto,false)
+			idroot++;//parseInt(column.getAttribute("IDROOT"))
+			let idoroot=""+this.codeLegacyIdo(idroot,idClass,false)
 			let idtoroot=this.getIdClassForName("COLUMNAS_TABLA");
 			
 			if(!columngroup.has(keygr)){
@@ -460,7 +483,7 @@ class OntologieMap{
 
 				grdn.setAttribute("IDO",idtoroot);
 				grdn.setAttribute("PROP",""+RDN);
-				grdn.textContent(""+idroot);
+				grdn.textContent=""+idroot;
 				adaptedIndiv.push(grdn);
 				
 				if(idParent>0){
@@ -490,7 +513,7 @@ class OntologieMap{
 			column.setAttribute("NAME","ORDEN_CAMPO_CON_FILTRO");			
 			column.setAttribute("IDO",""+idoorder);
 			column.setAttribute("PROP",""+this.getPropertyId("ruta_propiedad"));
-			column.textContent(path);
+			column.textContent=path;
 			column.setAttribute("VALUECLS",""+IDTO_STRING);
 			adaptedIndiv.push(column);
 			//
@@ -626,9 +649,14 @@ class OntologieMap{
    				return (tableId*1000+clase)*2;
    			}
    		}else   		
-   			return metadata_source!=undefined && metadata_source ? idto:getIdoNoCompress(tableId,idto);
+   			return metadata_source!=undefined && metadata_source ? idto:this.getIdoNoCompress(tableId,idto);
    	}
 	
+   	getIdoNoCompress(tableId, idto) {
+   		let ido= (Math.abs(tableId) * 1000 + idto)*(tableId<0?-1:1);
+   		return ido;
+   	}
+   	
 	getIdtoNoCompress(ido) {
 		let tableId = this.getTableIdNoCompress(ido);
 		if(ido<0) return -(Math.abs(ido)-Math.abs(tableId)*1000);
@@ -705,6 +733,74 @@ class OntologieMap{
 		res+="\n</"+cls.getName()+">";
 		return res;
 	}
+	
+	object_to_xml(xmlDoc, root_label,source_obj,out_obj,data_prop_label,obj_prop_label){
+		if(xmlDoc==undefined || xmlDoc==null){
+			let parser=new DOMParser();
+			xmlDoc= parser.parseFromString("<"+root_label+"/>","text/xml");	
+			out_obj=xmlDoc.documentElement ;
+		}
+		
+		if(out_obj==undefined||out_obj==null){
+			out_obj=xmlDoc.createElement(root_label);
+		}
+	
+		for(let child_name of Object.keys(source_obj)) {       
+			if (child_name!="class") {
+				if(Array.isArray(source_obj[child_name])){
+					for(let child_src of source_obj[child_name]){
+						let child=this.object_to_xml(xmlDoc,child_name,child_src,null,data_prop_label,obj_prop_label);
+						out_obj.appendChild(child);															
+					}
+				}else{
+					let childAttribute = xmlDoc.createAttribute(child_name);
+					childAttribute.value=source_obj[child_name];
+					out_obj.setAttributeNode(childAttribute);
+				}
+			}		
+		}
+		return out_obj;
+	}
+	
+	build_class(root,class_name, level, max_deep_level){
+		//TODO soportar clasificacion de rangos. POr ejemplo, al seleccionar un producto se deduce la clase de la linea compatible a la clase del producto
+		//Soporotar clases virtuales union de todos los especializados y de oneof, con fines gráficos (o que se resuelva al vuelo). Pero se predefine para referenciarse en configuraciones graficas		
+		let dataprop_arr=[];
+		root["dataprop"]=dataprop_arr;		
+		let objprop_arr=[];
+		root["objprop"]=objprop_arr;
+		
+		let cls=this.getClassByName(class_name);
+		for(let pdef of cls.getAllProperties()){
+			let item={name:pdef.getName(),ID:pdef.getIdProp()};
+			
+			if(!pdef.isObjectProperty()){
+				item["type"]=pdef.getDataPropertyTypeName();
+				dataprop_arr.push(item);			
+			}else{
+				//TODO En caso de haber especializados de rango, me quedo con la superior, y los formularios incluiran todo los de los hijos. Y en caso haber oneof deberia quedarme con un ID virtual
+				objprop_arr.push(item);
+				let idrange=Array.from(pdef.getObjectPropertyRanges())[0];
+				let clsRange=this.getClass(idrange);
+				
+				item["RANGE_NAME"]=clsRange.getName();
+				item["RANGEID"]=idrange;
+				let oneof_arr=[];
+				if(this.is_specialized_of(idrange,IDTO_ENUMERATED)){
+					let enumMap=this.individual_store.getIndividualMap(idrange);
+					
+					for(let [key,ind] of enumMap){						
+						let oneof={id:key,name:ind.rdn};
+						oneof_arr.push(oneof);
+					}					
+				}
+
+				if(oneof_arr.length>0) item["ONEOF"]=oneof_arr; 
+				if(level+1< max_deep_level)	this.build_class(item,clsRange.getName(),level+1,max_deep_level);
+			}
+		}		
+	}
+
 
 	getClass(id) {
 		return this.classById.get(id);

@@ -220,53 +220,53 @@ class Index{
     }
 
     check(individual, excluding_context_arr){
-	let class_compatible=false;
-	let group_key_map=new Map();
-	let index_key_map=new Map();
-	
-	for(let cls of this.class_list){
-	    if(this.jse.is_specialized_of(individual.class,cls)){
-		class_compatible=true;
-		break;
-	    }
-	}
-	if(class_compatible){
-	    //where es un filtrado, no una agrupacion
-	    for(let fprop of this.where_obj_prop_list){
-		if(fprop.included_in(excluding_context_arr)) continue;
-		//Este individuo siendo de clase compatible, y aunque admita por modelo relacionarse para esta object prop, quizas en la practica no tiene ninguna relacion de ese tipo y no cumple
-		if(!this.check_where_obj_prop(individual,fprop)){
-		    class_compatible=false;
-		    break;
-		}
-	    }
-	    if(class_compatible){
-		for(let dprop of this.where_data_prop_list){
-		    if(!this.check_where_data_prop_list(individual,dprop)){
-			class_compatible=false;
+		let class_compatible=false;
+		let group_key_map=new Map();
+		let index_key_map=new Map();
+		
+		for(let cls of this.class_list){
+			if(this.jse.is_specialized_of(individual.class,cls)){
+			class_compatible=true;
 			break;
-		    }
+			}
 		}
-	    }
-	    //TODO check custom filter
-	}
+		if(class_compatible){
+			//where es un filtrado, no una agrupacion
+			for(let fprop of this.where_obj_prop_list){
+			if(fprop.included_in(excluding_context_arr)) continue;
+			//Este individuo siendo de clase compatible, y aunque admita por modelo relacionarse para esta object prop, quizas en la practica no tiene ninguna relacion de ese tipo y no cumple
+			if(!this.check_where_obj_prop(individual,fprop)){
+				class_compatible=false;
+				break;
+			}
+			}
+			if(class_compatible){
+			for(let dprop of this.where_data_prop_list){
+				if(!this.check_where_data_prop_list(individual,dprop)){
+				class_compatible=false;
+				break;
+				}
+			}
+			}
+			//TODO check custom filter
+		}
 
-	let reverse=false;
-	let is_indexed=this.is_indexed(individual);
-	if(class_compatible){
-	    if(!is_indexed){
-		this.index_new_object(individual);
-	    }
-	}else{
-	    if(is_indexed){
-		reverse=true;
-		//TODO remove and log
-	    }
-	}
-	if(class_compatible || reverse){
-	    this.group_execution(individual,group_key_map);
-	}
-	return class_compatible;
+		let reverse=false;
+		let is_indexed=this.is_indexed(individual);
+		if(class_compatible){
+			if(!is_indexed){
+			this.index_new_object(individual);
+			}
+		}else{
+			if(is_indexed){
+			reverse=true;
+			//TODO remove and log
+			}
+		}
+		if(class_compatible || reverse){
+			this.group_execution(individual,group_key_map);
+		}
+		return class_compatible;
     }
     
     group_execution(individual,group_key_map){	

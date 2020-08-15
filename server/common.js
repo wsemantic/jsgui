@@ -12,7 +12,11 @@ const IDTO_TIME=7905;
 const IDTO_DATETIME=7912;
 const IDTO_UNIT=7925;
 const IDTO_IMAGE=7926;
-const IDTO_FILE=7927;		
+const IDTO_FILE=7927;
+const IDTO_FILTER=0;
+const IDTO_ENUMERATED=12;
+const CLSNAME_FILTER="FILTER";
+const MAX_DEEP_FILTER_LEVEL=3;
 
 const TABLEIDOFFSET=100;
 
@@ -34,6 +38,24 @@ class Common{
 		this.om.loadXMLMetadata(this,response);				
 		this.jse.init();
 	}
+	
+	expandXML(doc,root){
+		var c =root.children;
+		var i;
+		  for (i = 0; i < c.length; i++) {
+			var ch=c[i];
+			if(ch.hasAttribute("ref_node")){
+				var ref=c[i].getAttribute("ref_node");
+				var node=doc.querySelector("[id_node='"+ref+"']");
+				var atmap=node.attributes;
+				var a;
+				for(a=0;a<atmap.length;a++){					
+					ch.setAttribute(atmap[a].name,atmap[a].value);
+				}
+			}
+			this.expandXML(doc,c[i]);
+		  }
+	}
 
 	transform(xmldata,xslfile,document,node_id,click_handle){
 		let xhttp = new XMLHttpRequest();
@@ -43,12 +65,16 @@ class Common{
 			if (this.readyState == 4 && this.status == 200) {
 				let xsldoc=this.responseXML;
 				let xslstr=this.responseText;
-				xsltProcessor.importStylesheet(xsldoc);
+				xsltProcessor.importStylesheet(xsldoc.firstElementChild);
 				let result= xsltProcessor.transformToFragment(xmldata, document);
-				let str=new XMLSerializer().serializeToString(result);
-				document.getElementById(node_id).appendChild(result);
+				//let str=new XMLSerializer().serializeToString(result);
+				//var xmlText = new XMLSerializer().serializeToString(result);
+				var owner_node=document.getElementById(node_id);
+				var result_root_el=result.firstElementChild;
 				
-				if(click_handle!=undefined && click_handle!=null){
+				owner_node.appendChild(document.adoptNode(result_root_el));//result_root_el);
+				
+				if(click_handle!="undefined" && click_handle!=null){
 					for(let item of click_handle){
 						$(item.select).click(item.handle);
 					}
@@ -59,15 +85,27 @@ class Common{
 		xhttp.send();
 	}
 	
-	getXMLfile(filename, handle_response){
+	postXMLfile(filename, poststr, handle_response){
 		let xhttp = new XMLHttpRequest();
+		let postaction=poststr!== undefined && poststr!=null;
+		xhttp.open(postaction?"POST":"GET", filename, true);
+		if(postaction){
+			xhttp.setRequestHeader('Content-type', 'xml/text');
+		}
 		xhttp.onreadystatechange = function() {
-			if (this.readyState == 4 && this.status == 200) {
+			if (this.readyState == 4 && this.status == 200 && this.responseXML !==undefined) {
 				handle_response(this.responseXML);
 			}
 		};
-		xhttp.open("GET", filename, true);
-		xhttp.send();
+
+		if(postaction){
+			xhttp.send(poststr);
+		}else
+			xhttp.send();
+	}
+		
+	getXMLfile(filename, handle_response){
+		this.postXMLfile(filename, null, handle_response);
 	}
 }
 

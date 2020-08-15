@@ -4,33 +4,40 @@
 class individual_store{
 
 	constructor(ontologieMap){
-		this.factArr=Immutable.Map({});	//key classId=>Map (key id=>ind)
+		this.factArr=new Map();	//key classId=>Map (key id=>ind)
 		this.ontologieMap=ontologieMap;
 		this.inverseArr=new Map();// TODO make inmutable
 		this.rdnmap=new Map();//key=idclass+#+rdn,value id
+		this.filter_count=0;
 	}
+	
 	getIndByRdn(cls_id,rdn){
 		let id=this.rdnmap.get(""+cls_id+"#"+rdn);
 		if(id!=undefined) return this.getIndivById(id);
 	}
 
+	increase_filter_count(){
+		this.filter_count++;
+		return this.filter_count;
+	}
+	
 	insert(ind){
 		var classArr;
 
 		if(!this.factArr.has(ind.class)){
 			classArr=new Map();
 			// Assign result to itself, because immutate return a new copy
-			this.factArr=this.factArr.set(ind.class,classArr);
+			this.factArr.set(ind.class,classArr);
 		}else{
 			classArr=this.factArr.get(ind.class);
 		}
 		if(!classArr.has(ind.id)){
-			var mutclassArr=classArr.set(ind.id,ind);
-			this.factArr=this.factArr.set(ind.class,classArr);   
-			let cls=this.ontologieMap.getClass(ind.class);
-			let x;
-			for(let prop of cls.getAllProperties()){
-				this.update_inverse_map(ind,prop);
+			classArr.set(ind.id,ind);  
+			if(ind.class!=IDTO_FILTER){
+			let cls=this.ontologieMap.getClass(ind.class);			
+				for(let prop of cls.getAllProperties()){
+					this.update_inverse_map(ind,prop);
+				}
 			}
 		}
 		if(ind.hasOwnProperty("rdn")){
@@ -100,9 +107,10 @@ class individual_store{
 								}
 								xml+="\n\t<"+clsRange.name+" rdn=\""+groupname+"\" id=\""+rangeInd.id+"\">";
 								lastgroup=groupname;
-								lastgroupClass=clsRange.name;
+								
 								break;
 							}
+							lastgroupClass=clsRange.name;
 						}							
 					}
 				}
@@ -115,7 +123,7 @@ class individual_store{
 			    xml+="</UL>";*/
 			}
 		});
-	    if(groupname.length>0) xml+="\n\t</"+groupname+">";
+	    if(lastgroupClass.length>0) xml+="\n\t</"+lastgroupClass+">";
 		xml+="\n</INDIVIDUAL>";	 
 		return xml;
 	}
@@ -210,6 +218,7 @@ class individual_store{
 		let id_arr=rangeMap.get(prop_def.id);
 		if(id_arr===undefined) return [];
 
+		//return array of ind
 		return this.getIndiv_list_ById(id_arr);
 	}
 
